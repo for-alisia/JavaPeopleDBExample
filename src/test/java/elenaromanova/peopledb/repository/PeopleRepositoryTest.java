@@ -1,6 +1,7 @@
 package elenaromanova.peopledb.repository;
 
 import elenaromanova.peopledb.model.Person;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,15 +16,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class PeopleRepositoryTest {
 
     private Connection connection;
+    private PeopleRepository repo;
 
     @BeforeEach
     void setUp() throws SQLException {
         connection = DriverManager.getConnection("jdbc:h2:/Users/alisia/Projects/people_test");
+        connection.setAutoCommit(false);
+        repo = new PeopleRepository(connection);
+    }
+
+    @AfterEach
+    void tearDown() throws SQLException {
+        if (connection != null) {
+            connection.close();
+        }
     }
 
     @Test
     public void canSaveOnePerson() {
-        PeopleRepository repo = new PeopleRepository(connection);
         Person john = new Person(
             "John",
             "Smith",
@@ -35,7 +45,6 @@ public class PeopleRepositoryTest {
 
     @Test
     public void canSaveTwoPeople() {
-        PeopleRepository repo = new PeopleRepository(connection);
         Person john = new Person(
                 "John",
                 "Smith",
