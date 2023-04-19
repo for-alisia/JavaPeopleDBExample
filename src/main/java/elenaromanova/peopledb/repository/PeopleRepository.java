@@ -1,5 +1,6 @@
 package elenaromanova.peopledb.repository;
 
+import elenaromanova.peopledb.exception.UnableToSaveException;
 import elenaromanova.peopledb.model.Person;
 
 import java.sql.*;
@@ -12,7 +13,7 @@ public class PeopleRepository {
         this.connection = connection;
     }
 
-    public Person save(Person person) {
+    public Person save(Person person) throws UnableToSaveException {
         try {
             PreparedStatement preparedStatement = connection.prepareStatement(
                     SAVE_PERSON_SQL,
@@ -31,7 +32,8 @@ public class PeopleRepository {
                 System.out.println(person);
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            throw new UnableToSaveException("Tried to save person: " + person);
         }
         return person;
     }
