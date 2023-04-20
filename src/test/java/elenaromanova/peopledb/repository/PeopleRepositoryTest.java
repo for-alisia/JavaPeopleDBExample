@@ -1,6 +1,7 @@
 package elenaromanova.peopledb.repository;
 
 import elenaromanova.peopledb.model.Person;
+import elenaromanova.peopledb.model.PersonTest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +11,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,28 +36,37 @@ public class PeopleRepositoryTest {
 
     @Test
     public void canSaveOnePerson() {
-        Person john = new Person(
-            "John",
-            "Smith",
-            ZonedDateTime.of(1987, 3, 15,14, 32, 0, 0, ZoneId.of("+2")));
-        Person savedPerson = repo.save(john);
+        Person person = PersonTest.createPerson();
+        Person savedPerson = repo.save(person);
 
         assertThat(savedPerson.getId()).isGreaterThan(0);
     }
 
     @Test
     public void canSaveTwoPeople() {
-        Person john = new Person(
-                "John",
-                "Smith",
-                ZonedDateTime.of(1987, 3, 15,14, 32, 0, 0, ZoneId.of("+2")));
-        Person jane = new Person(
-                "Lane",
-                "Doe",
-                ZonedDateTime.of(1994, 5, 9,22, 12, 0, 0, ZoneId.of("+1")));
-        Person savedJohn = repo.save(john);
-        Person savedJane = repo.save(jane);
+        Person firstPerson = PersonTest.createPerson();
+        Person secondPerson = PersonTest.createPerson();
+        Person savedFirstPerson = repo.save(firstPerson);
+        Person savedSecondPerson = repo.save(secondPerson);
 
-        assertThat(savedJohn.getId()).isNotEqualTo(savedJane.getId());
+        assertThat(savedFirstPerson.getId()).isNotEqualTo(savedSecondPerson.getId());
     }
+
+    @Test
+    public void canFindPersonById() {
+        Person person = PersonTest.createPerson();
+        Person savedPerson = repo.save(person);
+        Optional<Person> foundPerson = repo.findById(savedPerson.getId());
+
+        assertThat(foundPerson.get()).isEqualTo(savedPerson);
+    }
+
+    @Test
+    public void testFindPersonByIdNotFound() {
+        Optional<Person> person = repo.findById(-1L);
+
+        assertThat(person).isEmpty();
+    }
+
+
 }
