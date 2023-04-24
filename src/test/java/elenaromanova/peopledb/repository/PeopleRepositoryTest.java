@@ -11,6 +11,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -68,5 +69,36 @@ public class PeopleRepositoryTest {
         assertThat(person).isEmpty();
     }
 
+    @Test
+    public void canCountPeople() {
+        long startCount = repo.count();
+        repo.save(PersonTest.createPerson());
+        repo.save(PersonTest.createPerson());
+        long endCount = repo.count();
 
+        assertThat(endCount - startCount).isEqualTo(2);
+    }
+
+    @Test
+    public void canDeletePersonById() {
+        Person person = repo.save(PersonTest.createPerson());
+        repo.delete(person.getId());
+        Optional<Person> removedPerson = repo.findById(person.getId());
+
+        assertThat(removedPerson).isEmpty();
+    }
+
+    @Test
+    public void canDeleteMultiplePeopleByIds() {
+        Person person1 = repo.save(PersonTest.createPerson());
+        Person person2 = repo.save(PersonTest.createPerson());
+        repo.delete(person1.getId(), person2.getId());
+
+        Optional<Person> removedPerson1 = repo.findById(person1.getId());
+        Optional<Person> removedPerson2 = repo.findById(person2.getId());
+
+        assertThat(removedPerson1).isEmpty();
+        assertThat(removedPerson2).isEmpty();
+    }
 }
+

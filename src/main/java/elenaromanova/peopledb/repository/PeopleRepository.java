@@ -1,16 +1,22 @@
 package elenaromanova.peopledb.repository;
 
+import elenaromanova.peopledb.exception.UnableToCountPeopleException;
+import elenaromanova.peopledb.exception.UnableToRemovePersonException;
 import elenaromanova.peopledb.exception.UnableToSaveException;
 import elenaromanova.peopledb.model.Person;
 
 import java.sql.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 public class PeopleRepository {
     public static final String SAVE_PERSON_SQL = "INSERT INTO people (first_name, last_name, dob) VALUES(?, ?, ?)";
     public static final String SELECT_PERSON_BY_ID = "SELECT id, first_name, last_name, dob FROM people WHERE id=?";
+    public static final String COUNT_PEOPLE = "SELECT COUNT(id) AS count FROM people";
+    public static final String DELETE_PERSON = "DELETE FROM people WHERE id=?";
+    public static final String DELETE_PEOPLE = "DELETE FROM people WHERE id = ANY (?)";
     private final Connection connection;
     public PeopleRepository(Connection connection) {
         this.connection = connection;
@@ -68,5 +74,46 @@ public class PeopleRepository {
         }
 
         return Optional.ofNullable(person);
+    }
+
+    public long count() throws UnableToCountPeopleException {
+        try {
+            long count = 0;
+            PreparedStatement statement = connection.prepareStatement(COUNT_PEOPLE);
+            ResultSet resultSet = statement.executeQuery();
+
+            while(resultSet.next()) {
+                count = resultSet.getLong("count");
+            }
+
+            return count;
+        } catch(SQLException e) {
+            e.printStackTrace();
+            throw new UnableToCountPeopleException("Unable to count people");
+        }
+    }
+
+    public long delete(Long id) {
+        try {
+            PreparedStatement statement = connection.prepareStatement(DELETE_PERSON);
+            statement.setLong(1, id);
+            statement.executeUpdate();
+        } catch(SQLException e) {
+            e.printStackTrace();
+            throw new UnableToRemovePersonException("Unable to remove person with id: " + id);
+        }
+
+        return id;
+    }
+
+    public void delete(Long...peopleIds) throws UnableToRemovePersonException {
+        try {
+            PreparedStatement statement = connection.prepareStatement(DELETE_PEOPLE);
+            statement.setArray(1, connection.createArrayOf("long", peopleIds));
+            statement.executeUpdate();
+        } catch(SQLException e) {
+            e.printStackTrace();
+            throw new UnableToRemovePersonException("Unable to remove multiple people");
+        }
     }
 }
