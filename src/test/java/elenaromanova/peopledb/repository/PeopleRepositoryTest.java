@@ -100,5 +100,18 @@ public class PeopleRepositoryTest {
         assertThat(removedPerson1).isEmpty();
         assertThat(removedPerson2).isEmpty();
     }
+
+    @Test
+    public void canUpdatePerson() {
+        Person person = repo.save(PersonTest.createPerson());
+        Person savedPerson = repo.findById(person.getId()).get();
+        String firstName = savedPerson.getFirstName();
+        savedPerson.setFirstName("Alex");
+        repo.update(savedPerson);
+        Person modifiedPerson = repo.findById(savedPerson.getId()).get();
+
+        assertThat(firstName).isNotEqualTo(modifiedPerson.getFirstName());
+        assertThat(modifiedPerson.getFirstName()).isEqualTo("Alex");
+    }
 }
 

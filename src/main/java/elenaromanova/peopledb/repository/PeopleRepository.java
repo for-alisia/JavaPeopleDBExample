@@ -3,12 +3,12 @@ package elenaromanova.peopledb.repository;
 import elenaromanova.peopledb.exception.UnableToCountPeopleException;
 import elenaromanova.peopledb.exception.UnableToRemovePersonException;
 import elenaromanova.peopledb.exception.UnableToSaveException;
+import elenaromanova.peopledb.exception.UnableToUpdateException;
 import elenaromanova.peopledb.model.Person;
 
 import java.sql.*;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Optional;
 
 public class PeopleRepository {
@@ -17,6 +17,7 @@ public class PeopleRepository {
     public static final String COUNT_PEOPLE = "SELECT COUNT(id) AS count FROM people";
     public static final String DELETE_PERSON = "DELETE FROM people WHERE id=?";
     public static final String DELETE_PEOPLE = "DELETE FROM people WHERE id = ANY (?)";
+    public static final String UPDATE_PERSON = "UPDATE people SET first_name=?, last_name=?, dob=? WHERE id=?";
     private final Connection connection;
     public PeopleRepository(Connection connection) {
         this.connection = connection;
@@ -30,8 +31,7 @@ public class PeopleRepository {
             );
             preparedStatement.setString(1, person.getFirstName());
             preparedStatement.setString(2, person.getLastName());
-            preparedStatement.setTimestamp(3, Timestamp.valueOf(
-                    person.getDob().withZoneSameInstant(ZoneId.of("+0")).toLocalDateTime())
+            preparedStatement.setTimestamp(3, convertDobToTimestamp(person.getDob())
             );
             int recordsAffected = preparedStatement.executeUpdate();
             ResultSet resultSet = preparedStatement.getGeneratedKeys();
@@ -115,5 +115,25 @@ public class PeopleRepository {
             e.printStackTrace();
             throw new UnableToRemovePersonException("Unable to remove multiple people");
         }
+    }
+
+    public Person update(Person person) {
+        try {
+            PreparedStatement statement = connection.prepareStatement(UPDATE_PERSON);
+            statement.setString(1, person.getFirstName());
+            statement.setString(2, person.getLastName());
+            statement.setTimestamp(3, convertDobToTimestamp(person.getDob()));
+            statement.setLong(4, person.getId());
+            statement.executeUpdate();
+        } catch(SQLException e) {
+            e.printStackTrace();
+            throw new UnableToUpdateException("Unable to update person with id: " + person.getId());
+        }
+        return person;
+    }
+
+    private static Timestamp convertDobToTimestamp(ZonedDateTime dob) {
+        return Timestamp.valueOf(
+                dob.withZoneSameInstant(ZoneId.of("+0")).toLocalDateTime());
     }
 }
